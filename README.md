@@ -1,5 +1,21 @@
 # Energy Management Using Real-Time Non-Intrusive Load Monitoring
 
+## FYP測試
+檢查文件
+train.py
+define_models.py
+nilm_metric.py
+common.py
+train_distributed.py
+
+## 文件目錄
+- `./ard` Arduino工作區
+- `./img` 靜態圖片
+- `./ml` Machine Learning工作區
+- `./pan-ard-inf`
+- `./rpi` Raspberry Pi工作區
+- `/tpu` Google Edge TPU工作區
+
 ## Introduction
 
 The goal of non-intrusive load monitoring (NILM) is to recover the energy consumption of individual appliances from the aggregate mains signal, which is a measure of the total electricity consumption of a building or house. NILM is also known as energy disaggregation and both terms will be used interchangeably throughout.
