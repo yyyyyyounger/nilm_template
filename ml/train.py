@@ -1,7 +1,9 @@
-"""
-訓練神經網路來執行能量分解。
+"""Train a neural network to perform energy disaggregation.
 
-給定一系列電源讀數，該演算法將電源分成電器。
+Given a sequence of electricity mains reading, the algorithm
+separates the mains into appliances.
+
+Copyright (c) 2022~2023 Lindo St. Angel
 """
 
 import os
@@ -14,16 +16,17 @@ from keras import mixed_precision
 import matplotlib.pyplot as plt
 
 import define_models
-from logger import log
+from logger import Logger
 import common
 
 # Specify model architecture to use for training.
-MODEL_ARCH = "transformer_fit"
+# MODEL_ARCH = "transformer_fit"
+MODEL_ARCH = "cnn"
 model_archs = dir(define_models)
 if MODEL_ARCH not in model_archs:
     raise ValueError(f"Unknown model architecture: {MODEL_ARCH}!")
 else:
-    log(f"Using model architecture: {MODEL_ARCH}.")
+    print(f"Using model architecture: {MODEL_ARCH}.")
 
 ### DO NOT USE MIXED-PRECISION - CURRENTLY GIVES POOR MODEL ACCURACY ###
 # TODO: fix.
@@ -107,7 +110,7 @@ def get_arguments():
     parser.add_argument(
         "--prune_log_dir",
         type=str,
-        default="/home/lindo/Develop/nilm/ml/pruning_logs",
+        default="./pruning_logs",
         help="location of pruning logs",
     )
     parser.add_argument(
@@ -195,27 +198,34 @@ def decay_custom_schedule(
 
 
 if __name__ == "__main__":
-    log(f"Machine name: {socket.gethostname()}")
-    log(f"tf version: {tf.version.VERSION}")
     args = get_arguments()
-    log("Arguments: ")
-    log(args)
+    logger = Logger(
+        os.path.join(
+            args.save_dir,
+            args.appliance_name,
+            f"{args.appliance_name}_{MODEL_ARCH}.log",
+        )
+    )
+    logger.log(f"Machine name: {socket.gethostname()}")
+    logger.log(f"tf version: {tf.version.VERSION}")
+    logger.log("Arguments: ")
+    logger.log(args)
 
     # The appliance to train on.
     appliance_name = args.appliance_name
-    log(f"Appliance name: {appliance_name}")
+    logger.log(f"Appliance name: {appliance_name}")
 
     batch_size = args.batchsize
-    log(f"Batch size: {batch_size}")
+    logger.log(f"Batch size: {batch_size}")
 
     window_length = common.params_appliance[appliance_name]["window_length"]
-    log(f"Window length: {window_length}")
+    logger.log(f"Window length: {window_length}")
 
     # Path for training data.
     training_path = os.path.join(
         args.datadir, appliance_name, f"{appliance_name}_training_.csv"
     )
-    log(f"Training dataset: {training_path}")
+    logger.log(f"Training dataset: {training_path}")
 
     # Look for the validation set
     for filename in os.listdir(os.path.join(args.datadir, appliance_name)):
@@ -223,21 +233,21 @@ if __name__ == "__main__":
             val_filename = filename
     # path for validation data
     validation_path = os.path.join(args.datadir, appliance_name, val_filename)
-    log(f"Validation dataset: {validation_path}")
+    logger.log(f"Validation dataset: {validation_path}")
 
     model_filepath = os.path.join(args.save_dir, appliance_name)
-    log(f"Model file path: {model_filepath}")
+    logger.log(f"Model file path: {model_filepath}")
 
     savemodel_filepath = os.path.join(model_filepath, f"savemodel_{MODEL_ARCH}")
-    log(f"Savemodel file path: {savemodel_filepath}")
+    logger.log(f"Savemodel file path: {savemodel_filepath}")
 
     # Load datasets.
     train_dataset = common.load_dataset(training_path, args.crop_train_dataset)
     val_dataset = common.load_dataset(validation_path, args.crop_val_dataset)
     num_train_samples = train_dataset[0].size
-    log(f"There are {num_train_samples/10**6:.3f}M training samples.")
+    logger.log(f"There are {num_train_samples/10**6:.3f}M training samples.")
     num_val_samples = val_dataset[0].size
-    log(f"There are {num_val_samples/10**6:.3f}M validation samples.")
+    logger.log(f"There are {num_val_samples/10**6:.3f}M validation samples.")
 
     # Init window generator to provide samples and targets.
     WindowGenerator = common.get_window_generator()
@@ -258,8 +268,9 @@ if __name__ == "__main__":
         monitor="val_loss", patience=6, verbose=2
     )
 
+    """***************** 參數設定完成，開始特定Train *******************"""
     if args.train:
-        log("Training model from scratch.")
+        logger.log("Training model from scratch.")
 
         if MODEL_ARCH == "transformer":
             raise ValueError(
@@ -270,11 +281,11 @@ if __name__ == "__main__":
             threshold = common.params_appliance[appliance_name]["on_power_threshold"]
             max_on_power = common.params_appliance[appliance_name]["max_on_power"]
             threshold /= max_on_power
-            log(f"Normalized on power threshold: {threshold}")
+            logger.log(f"Normalized on power threshold: {threshold}")
 
             # Get L1 loss multiplier.
             c0 = common.params_appliance[appliance_name]["c0"]
-            log(f"L1 loss multiplier: {c0}")
+            logger.log(f"L1 loss multiplier: {c0}")
 
             model_depth = 256
             model = define_models.transformer_fit(
@@ -286,7 +297,8 @@ if __name__ == "__main__":
             # lr_schedule = TransformerCustomSchedule(d_model=model_depth)
             lr_schedule = 1e-4
         elif MODEL_ARCH == "cnn":
-            model = define_models.cnn(window_length=window_length)
+            # model = define_models.cnn(window_length=window_length)
+            model = define_models.cnn()
             lr_schedule = 1e-4
         elif MODEL_ARCH == "fcn":
             model = define_models.fcn(window_length=window_length)
@@ -335,7 +347,7 @@ if __name__ == "__main__":
             appliance_name=appliance_name,
         )
     elif args.qat:
-        log("Fine-tuning pre-trained model with quantization aware training.")
+        logger.log("Fine-tuning pre-trained model with quantization aware training.")
 
         quantize_model = tfmot.quantization.keras.quantize_model
 
@@ -354,7 +366,7 @@ if __name__ == "__main__":
         q_aware_model.summary()
 
         q_checkpoint_filepath = os.path.join(model_filepath, "qat_checkpoints")
-        log(f"QAT checkpoint file path: {q_checkpoint_filepath}")
+        logger.log(f"QAT checkpoint file path: {q_checkpoint_filepath}")
 
         q_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             filepath=q_checkpoint_filepath,
@@ -385,7 +397,7 @@ if __name__ == "__main__":
             appliance_name=appliance_name,
         )
     elif args.prune:
-        log("Prune pre-trained model for on-device inference.")
+        logger.log("Prune pre-trained model for on-device inference.")
 
         model = tf.keras.models.load_model(savemodel_filepath)
 
@@ -409,7 +421,7 @@ if __name__ == "__main__":
         try:
             model_for_pruning = prune_low_magnitude(model, **pruning_params)
         except ValueError as e:
-            log(e, level="error")
+            logger.log(e, level="error")
             exit()
 
         model_for_pruning.compile(
@@ -428,7 +440,7 @@ if __name__ == "__main__":
         pruning_checkpoint_filepath = os.path.join(
             model_filepath, f"pruning_checkpoints_{MODEL_ARCH}"
         )
-        log(f"Pruning checkpoint file path: {pruning_checkpoint_filepath}")
+        logger.log(f"Pruning checkpoint file path: {pruning_checkpoint_filepath}")
 
         pruning_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             filepath=pruning_checkpoint_filepath,
@@ -468,7 +480,7 @@ if __name__ == "__main__":
         pruned_model_filepath = os.path.join(
             model_filepath, f"pruned_model_{MODEL_ARCH}"
         )
-        log(f"Final pruned model file path: {pruned_model_filepath}")
+        logger.log(f"Final pruned model file path: {pruned_model_filepath}")
         model_for_pruning.save(pruned_model_filepath)
 
         model_for_export = tfmot.sparsity.keras.strip_pruning(model_for_pruning)
@@ -477,7 +489,9 @@ if __name__ == "__main__":
         pruned_model_for_export_filepath = os.path.join(
             model_filepath, f"pruned_model_for_export_{MODEL_ARCH}"
         )
-        log(f"Pruned model for export file path: {pruned_model_for_export_filepath}")
+        logger.log(
+            f"Pruned model for export file path: {pruned_model_for_export_filepath}"
+        )
         model_for_export.save(pruned_model_for_export_filepath)
     else:
         print("Nothing was done, train, qat or prune must be selected.")

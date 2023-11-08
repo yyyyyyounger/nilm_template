@@ -14,7 +14,7 @@ def load(file_name, crop=None) -> np.array:
 
 if __name__ == '__main__':
     default_appliance = 'fridge'
-    default_dataset_dir = '/home/lindo/Develop/nilm/ml/dataset_management/refit/'
+    default_dataset_dir = '/usr/src/tfTest/nilm/ml/dataset_management/refit/'
 
     parser = argparse.ArgumentParser(
         description='Compute statistics on dataset'

@@ -27,11 +27,12 @@ if __name__ == '__main__':
     default_appliances = [
         'kettle', 'fridge', 'microwave', 'washingmachine', 'dishwasher'
     ]
-    default_dataset_dir = '/home/lindo/Develop/nilm/ml/dataset_management/my-house'
+    default_dataset_dir = '/usr/src/tfTest/nilm/ml/dataset_management/my-house'
     default_panel_location = 'garage'
-    default_model_dir = '/home/lindo/Develop/nilm/ml/models'
+    default_model_dir = '/usr/src/tfTest/nilm/ml/models'
     default_ckpt_dir = 'checkpoints'
-    default_results_dir = '/home/lindo/Develop/nilm/ml/results'
+    default_results_dir = '/usr/src/tfTest/nilm/ml/results'
+    # TODO: 未進行
     default_rt_preds_dataset_dir = '/home/lindo/Develop/nilm-datasets/my-house/garage/samples_6_7_22.csv'
 
     parser = argparse.ArgumentParser(description='Predict appliance\

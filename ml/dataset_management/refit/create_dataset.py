@@ -4,7 +4,7 @@ import os
 import re
 import argparse
 
-DATA_DIRECTORY = '/home/lindo/Develop/nilm-datasets/REFIT/CLEAN_REFIT_081116/'
+DATA_DIRECTORY = '/usr/src/tfTest/nilm/raw-data/CLEAN_REFIT_081116/'
 SAVE_PATH = 'kettle/'
 AGG_MEAN = 522
 AGG_STD = 814

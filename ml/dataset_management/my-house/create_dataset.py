@@ -12,9 +12,9 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 
-DATA_DIRECTORY = '/home/lindo/Develop/nilm-datasets/my-house/house'
+DATA_DIRECTORY = '/usr/src/tfTest/nilm/ml/dataset_management/my-house/house'
 FILE_NAME = 'samples_10_31_22.csv'
-SAVE_PATH = '/home/lindo/Develop/nilm/ml/dataset_management/my-house/house.csv'
+SAVE_PATH = '/usr/src/tfTest/nilm/ml/dataset_management/my-house/house.csv'
 
 def get_arguments():
     parser = argparse.ArgumentParser(description='Create aggregate dataset from house data')

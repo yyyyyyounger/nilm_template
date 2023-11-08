@@ -156,11 +156,11 @@ def get_arguments():
                         help='Name of target appliance.')
     parser.add_argument('--datadir',
                         type=str,
-                        default='/home/lindo/Develop/nilm/ml/dataset_management/refit',
+                        default='/usr/src/tfTest/nilm/ml/dataset_management/refit',
                         help='Directory of datasets.')
     parser.add_argument('--save_dir',
                         type=str,
-                        default='/home/lindo/Develop/nilm/ml/models',
+                        default='/usr/src/tfTest/nilm/ml/models',
                         help='Directory to save the quantized model')
     parser.add_argument('--crop',
                         type=int,

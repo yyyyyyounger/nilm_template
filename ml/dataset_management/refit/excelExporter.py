@@ -56,5 +56,5 @@ mng.resize(*mng.window.maxsize())
 plt.show(fig)
 
 
-save_path = '/home/michele/Desktop/' + 'slice_from_' + building +'.csv'
+save_path = '/usr/src/tfTest/nilm/excel-exporter/' + 'slice_from_' + building +'.csv'
 csv.to_csv(save_path, index=False)
